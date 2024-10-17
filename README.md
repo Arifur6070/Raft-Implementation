@@ -1,0 +1,1 @@
+This is simple raft implementation in python. There is router which will hold the data of how many nodes are present there also will have the status of leader. Also added some sample scripts to test the algorithm.
