@@ -1,3 +1,4 @@
+import os
 import requests
 import time
 import threading
@@ -32,6 +33,7 @@ class RaftNode:
         """ Set up Flask for handling requests. """
         self.app = Flask(__name__)
         self.app.add_url_rule('/request_vote', 'request_vote', self.request_vote, methods=['POST'])
+        self.app.add_url_rule('/node-status', 'get_node_status', self.get_node_status, methods=['GET'])
         self.app.add_url_rule('/log', 'log', self.store_log, methods=['POST'])  # route for logs
         self.app.add_url_rule('/check_consistency', 'check_consistency', self.check_consistency, methods=['GET'])  # Consistency check route
 
@@ -107,6 +109,10 @@ class RaftNode:
         candidate_id = data['candidate_id']
         # Vote logic here
         return jsonify({'term': self.current_term, 'vote_granted': True})
+    
+    def get_node_status(self):
+        """ Handle vote requests from other nodes """
+        return jsonify({'message': "Hello From Node", 'node_id': self.node_id})
 
     def store_log(self):
         """ Store a log entry in the MySQL database without requiring the term from the user """
@@ -127,27 +133,27 @@ class RaftNode:
             return jsonify({'status': 'error', 'message': 'Failed to store log.'}), 500
 
     def check_consistency(self):
-       
         self.db_cursor.execute("SELECT * FROM logs ORDER BY id")
         logs = self.db_cursor.fetchall()
         return jsonify({'logs': logs})
 
-    def run(self):
-        # Running the Flask app on the user-specified port
-        self.app.run(port=self.node_port)
+    def run(self, host='0.0.0.0', port=5000):
+        self.app.run(host=host, port=port)
 
 if __name__ == "__main__":
-    node_id = int(input("Enter Node ID: "))
-    node_port = int(input("Enter Port for this node: "))  # Take the port as input
-    router_address = "localhost:5000"  # Raft Router address
+    node_id = int(os.getenv("NODE_ID", 1))
+    # node_id = int(input("Enter Node ID: "))
+    # node_port = int(input("Enter Port for this node: "))
+    router_address = "172.18.0.3:5000"  # Raft Router address
     
     # Database configuration
     db_config = {
-        'user': 'XXXXX',  
-        'password': 'XXXXXXX',  
-        'host': 'localhost',
+        'user': 'root',
+        'password': 'password',
+        'host': '172.18.0.2',
+        'port': 3306,
         'database': 'raft_db'
     }
     
-    node = RaftNode(node_id, node_port, router_address, db_config)
+    node = RaftNode(node_id, 5000, router_address, db_config)
     node.run()

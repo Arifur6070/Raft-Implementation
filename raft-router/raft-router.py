@@ -30,6 +30,11 @@ def leader_status():
     """ Return the current leader status """
     return jsonify({'leader': current_leader,'leader_port': current_leader_port})
 
+@app.route('/router-status', methods=['GET'])
+def router_status():
+    """ Return the router is up mor not """
+    return jsonify({'message': "Hello from router!!"})
+
 @app.route('/get-term', methods=['GET'])
 def term_status():
     """ Return the current term """
@@ -91,5 +96,4 @@ if __name__ == "__main__":
     # Start the heartbeat monitoring thread
     threading.Thread(target=monitor_heartbeats, daemon=True).start()
     
-    # Start the Flask app (Raft Router)
-    app.run(port=5000)
+    app.run(host='0.0.0.0', port=5000)
